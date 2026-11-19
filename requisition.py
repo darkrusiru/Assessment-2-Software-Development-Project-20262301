@@ -1,10 +1,12 @@
 
+from datetime import datetime
+
 counter = 1
 all_requisitions = []
 
 
 # Requisition Class
-class Requisition
+class Requisition:
 
     def __init__(self, date, staff_id, staff_name):
         global counter
@@ -21,7 +23,7 @@ class Requisition
 
         all_requisitions.append(self)
 
-    # Add requisition items and calculate the total
+    # Calculate the requisition total
     def add_requisition(self, items):
         self.total = 0
 
@@ -40,7 +42,7 @@ class Requisition
         else:
             self.status = "Pending"
 
-    # Allow the manager to respond to a pending requisition
+    # Manager response
     def respond_to_requisition(self, decision):
 
         if self.status != "Pending":
@@ -60,7 +62,7 @@ class Requisition
             self.status = "Not approved"
 
         else:
-            print("Invalid decision. Please enter Approved or Not approved.")
+            print("Invalid decision. Enter Approved or Not approved.")
 
     # Display all requisitions
     def display_requisitions(self):
@@ -108,7 +110,63 @@ class Requisition
         return statistics
 
 
-# Get a valid number from the user
+# Validate date
+def get_valid_date():
+
+    while True:
+        date = input("Date (DD/MM/YYYY): ").strip()
+
+        try:
+            valid_date = datetime.strptime(date, "%d/%m/%Y")
+
+            if valid_date.strftime("%d/%m/%Y") == date:
+                return date
+            else:
+                print("Invalid date format. Use DD/MM/YYYY.")
+
+        except ValueError:
+            print("Invalid date. Please enter a real date in DD/MM/YYYY format.")
+
+
+# Validate staff name
+def get_valid_name():
+
+    while True:
+        name = input("Staff Name: ").strip()
+
+        cleaned_name = name.replace(" ", "").replace("-", "").replace("'", "")
+
+        if cleaned_name != "" and cleaned_name.isalpha():
+            return name
+        else:
+            print("Invalid name. Use letters, spaces, hyphens or apostrophes only.")
+
+
+# Validate staff ID
+def get_valid_staff_id():
+
+    while True:
+        staff_id = input("Staff ID: ").strip()
+
+        if staff_id != "":
+            return staff_id
+        else:
+            print("Staff ID cannot be empty.")
+
+
+# Validate item name
+def get_valid_item_name():
+
+    while True:
+        item_name = input("Item Name: ").strip()
+
+        if item_name != "":
+            return item_name
+        else:
+            print("Item name cannot be empty.")
+
+
+# Validate number
 def get_number(message):
 
     while True:
@@ -116,7 +174,7 @@ def get_number(message):
             number = float(input(message))
 
             if number < 0:
-                print("Please enter a positive amount.")
+                print("Price cannot be negative.")
             else:
                 return number
 
@@ -134,20 +192,16 @@ while True:
     print("4. Show statistics")
     print("5. Exit")
 
-    choice = input("Choose (1-5): ")
+    choice = input("Choose (1-5): ").strip()
 
-    # Add a new requisition
+    # Add a requisition
     if choice == "1":
 
         print("\nEnter your information:")
 
-        date = input("Date: ").strip()
-        staff_id = input("Staff ID: ").strip()
-        staff_name = input("Staff Name: ").strip()
-
-        if date == "" or staff_id == "" or staff_name == "":
-            print("All information fields are required.\n")
-            continue
+        date = get_valid_date()
+        staff_id = get_valid_staff_id()
+        staff_name = get_valid_name()
 
         requisition = Requisition(date, staff_id, staff_name)
 
@@ -159,26 +213,28 @@ while True:
 
         while True:
 
-            item_name = input("Item Name: ").strip()
-
-            if item_name == "":
-                print("Item name cannot be empty.")
-                continue
-
+            item_name = get_valid_item_name()
             item_price = get_number("Item price ($): ")
 
             items.append((item_name, item_price))
 
-            another_item = input("Add another item (yes/no): ")
+            while True:
+                another_item = input("Add another item (yes/no): ").strip().lower()
 
-            if another_item.strip().lower() == "no":
+                if another_item == "yes":
+                    break
+
+                elif another_item == "no":
+                    another_item = "no"
+                    break
+
+                else:
+                    print("Please enter yes or no.")
+
+            if another_item == "no":
                 break
 
-            elif another_item.strip().lower() != "yes":
-                print("Please enter yes or no.")
-
         requisition.add_requisition(items)
-
         requisition.approve_requisition()
 
         print("\nTotal: $" + format(requisition.total, ".2f"))
@@ -207,28 +263,20 @@ while True:
             if found is None:
                 print("Requisition not found.")
 
+            elif found.status != "Pending":
+                print("This requisition is not pending.")
+
             else:
-                if found.status == "Pending":
+                decision = input(
+                    "Decision (Approved / Not approved): "
+                )
 
-                    decision = input(
-                        "Decision (Approved / Not approved): "
-                    )
+                found.respond_to_requisition(decision)
 
-                    found.respond_to_requisition(decision)
+                print("Status is now:", found.status)
 
-                    print("Status is now:", found.status)
-
-                    if found.approval_reference is not None:
-                        print(
-                            "Approval Reference:",
-                            found.approval_reference
-                        )
-
-                else:
-                    print(
-                        "Requisition", found.requisition_id,
-                        "is not pending, no change."
-                    )
+                if found.approval_reference is not None:
+                    print("Approval Reference:", found.approval_reference)
 
         except ValueError:
             print("Invalid ID. Please enter a number.")
@@ -240,7 +288,6 @@ while True:
 
         if len(all_requisitions) == 0:
             print("No requisitions yet.")
-
         else:
             all_requisitions[0].display_requisitions()
 
@@ -277,7 +324,7 @@ while True:
 
             print()
 
-    # Exit program
+    # Exit
     elif choice == "5":
 
         print("Goodbye!")
